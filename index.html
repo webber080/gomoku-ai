@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>五子棋</title><link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚫</text></svg>">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="game-wrapper">
+            <div class="side-panel">
+                <header>
+                    <h1>五子棋</h1>
+                </header>
+
+                <div class="game-info">
+                    <div class="info-item">
+                        <span class="label">回合</span>
+                        <span id="current-turn" class="value">黑方</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">步数</span>
+                        <span id="move-count" class="value">0</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">AI 思考</span>
+                        <span id="ai-status" class="value">就绪</span>
+                    </div>
+                </div>
+
+                <div class="mode-selector">
+                    <div class="mode-buttons">
+                        <button class="mode-btn active" data-mode="ai-first">AI先手</button>
+                        <button class="mode-btn" data-mode="player-first">玩家先手</button>
+                        <button class="mode-btn" data-mode="pvp">双人</button>
+                        <button class="mode-btn" data-mode="teaching">教学</button>
+                    </div>
+                </div>
+
+                <div class="game-controls">
+                    <button id="btn-new-game" class="btn btn-primary">新游戏</button>
+                    <button id="btn-hint" class="btn btn-hint">求提示</button>
+                    <button id="btn-undo" class="btn btn-secondary">悔棋</button>
+                    <button id="btn-export" class="btn btn-secondary">导出</button>
+                </div>
+
+                <div class="setting-row">
+                    <label class="setting-label" for="forbidden-toggle">
+                        <span>黑棋禁手（三三/四四/长连）</span>
+                        <span class="setting-switch">
+                            <input type="checkbox" id="forbidden-toggle" checked>
+                            <span class="slider"></span>
+                        </span>
+                    </label>
+                </div>
+
+                <div class="game-status">
+                    <div id="game-message" class="message">点击棋盘开始对弈</div>
+                </div>
+            </div>
+
+            <div class="board-container">
+                <canvas id="board" width="600" height="600"></canvas>
+            </div>
+        </div>
+
+        <details class="tutorial-panel" id="tutorial-panel">
+            <summary>📖 五子棋课程：从入门到战胜身边的对手（点开学习）</summary>
+            <div class="tutorial-content">
+
+                <div class="course-toc">
+                    <span>1 棋型</span>
+                    <span>2 杀招组合</span>
+                    <span>3 开局</span>
+                    <span>4 先手节奏</span>
+                    <span>5 防守</span>
+                    <span>6 禁手</span>
+                    <span>7 常见错误</span>
+                </div>
+
+                <h3 class="chapter-title">第 1 章 棋型：读懂胜负的语言</h3>
+                <p class="tutorial-intro">五子棋的一切计算都建立在棋型上。图中 ● 黑棋、○ 白棋、<b>△ 是关键空点</b>。棋型价值从高到低：连五 &gt; 活四 &gt; 冲四 &gt; 活三 &gt; 眠三 &gt; 活二。记住这个排序，后面所有战术都由它推导。</p>
+                <div class="pattern-grid">
+                    <div class="pattern-card">
+                        <h4>连五（游戏结束）</h4>
+                        <div class="pattern-demo">●●●●●</div>
+                        <p>五子相连立即获胜。所有棋型的终极目标。</p>
+                    </div>
+                    <div class="pattern-card">
+                        <h4>活四（= 已赢）</h4>
+                        <div class="pattern-demo">△●●●●△</div>
+                        <p>两端全空。对方只能堵一头，你走另一头成五。<b>做出活四等于赢棋</b>。</p>
+                    </div>
+                    <div class="pattern-card">
+                        <h4>冲四（绝对先手）</h4>
+                        <div class="pattern-demo">○●●●●△</div>
+                        <p>一端被堵，只剩一个成五点。<b>对方必须回应</b>，否则下一手你就赢——这是"命令式"的走法。</p>
+                    </div>
+                    <div class="pattern-card">
+                        <h4>活三（进攻发动机）</h4>
+                        <div class="pattern-demo">△●●●△</div>
+                        <p>两端皆空，下一手就能变成活四。对方必须立即处理。跳三（●△●●）威力相同。</p>
+                    </div>
+                    <div class="pattern-card">
+                        <h4>眠三（蓄力型）</h4>
+                        <div class="pattern-demo">○●●●△△</div>
+                        <p>一端被堵的三。只能发展成冲四，价值偏低，但多方向积累也能转化成威胁。</p>
+                    </div>
+                    <div class="pattern-card">
+                        <h4>活二（布局种子）</h4>
+                        <div class="pattern-demo">△△●●△△</div>
+                        <p>中盘以前的"存款"。活二→活三→活四是标准成长链，开局多攒活二。</p>
+                    </div>
+                </div>
+
+                <h3 class="chapter-title">第 2 章 杀招组合：一击必杀的公式</h3>
+                <p class="tutorial-intro">核心原理只有一句话：<b>对方一次只能落一子，你一手棋做出两个威胁就赢了。</b>以下组合都是"双威胁"。</p>
+                <div class="pattern-grid">
+                    <div class="pattern-card kill">
+                        <h4>四三杀（最经典）</h4>
+                        <div class="pattern-demo">一手=冲四+活三</div>
+                        <p>你冲四，对方必须堵；堵完你把活三变活四获胜。<b>实战中 80% 的杀招都是四三</b>。</p>
+                    </div>
+                    <div class="pattern-card kill">
+                        <h4>双活三</h4>
+                        <div class="pattern-demo">一手=两个活三</div>
+                        <p>对方只能堵一个，另一个升级成活四。注意两个活三要方向错开，同一直线上等于白下。</p>
+                    </div>
+                    <div class="pattern-card kill">
+                        <h4>双冲四</h4>
+                        <div class="pattern-demo">一手=两个冲四</div>
+                        <p>两个成五点，堵一个你走另一个。威力等同活四，出现即终局。</p>
+                    </div>
+                    <div class="pattern-card kill">
+                        <h4>怎样找杀点</h4>
+                        <div class="pattern-demo">交叉点思维</div>
+                        <p>数自己的活二、眠三都在哪些线上，<b>两条成长线的交叉点</b>往往就是双威胁落点。"求提示"按钮就是这么算的。</p>
+                    </div>
+                </div>
+
+                <h3 class="chapter-title">第 3 章 开局：前四步决定半盘棋</h3>
+                <div class="pattern-grid">
+                    <div class="pattern-card">
+                        <h4>第一子必下天元</h4>
+                        <div class="pattern-demo">棋盘正中心</div>
+                        <p>中心点向四个方向发展空间最大。偏离中心越多，可用方向越少，棋型价值打折。</p>
+                    </div>
+                    <div class="pattern-card">
+                        <h4>第二三子：贴着下</h4>
+                        <div class="pattern-demo">距离 ≤ 2 格</div>
+                        <p>开局乱飞的棋子毫无战斗力。前几手围绕天元 2 格内展开，让每个子参与多条线。</p>
+                    </div>
+                    <div class="pattern-card">
+                        <h4>必胜开局的存在</h4>
+                        <div class="pattern-demo">花月 / 浦月</div>
+                        <p>棋理已证明黑棋走"花月""浦月"等开局<b>必胜</b>（本站 AI 先手就走这类开局）。执黑可模仿：天元→斜二→连三。</p>
+                    </div>
+                    <div class="pattern-card">
+                        <h4>开局的方向感</h4>
+                        <div class="pattern-demo">斜线 &gt; 直线</div>
+                        <p>人眼对斜线迟钝，斜线组合也更丰富。开局优先在斜线布子，中盘杀伤力更大。</p>
+                    </div>
+                </div>
+
+                <h3 class="chapter-title">第 4 章 先手与节奏：让对手跟着你走</h3>
+                <p class="tutorial-intro"><b>先手 = 迫使对方必须回应的走法。</b>掌握先手的人掌控节奏：你连续进攻，对方连续防守，永远腾不出手反击。</p>
+                <div class="pattern-grid">
+                    <div class="pattern-card">
+                        <h4>冲四 = 绝对先手</h4>
+                        <div class="pattern-demo">对方 100% 必须堵</div>
+                        <p>不堵就输，没有商量。但<b>单纯冲四只是消耗</b>——冲完必须衔接新威胁，否则先手就"断"了。</p>
+                    </div>
+                    <div class="pattern-card">
+                        <h4>活三 = 相对先手</h4>
+                        <div class="pattern-demo">99% 要防守</div>
+                        <p>不堵的话下一手变活四。极少数情况对方可"反先手"（自己冲四更快），新手先老老实实堵。</p>
+                    </div>
+                    <div class="pattern-card">
+                        <h4>连续进攻 VCF/VCT</h4>
+                        <div class="pattern-demo">冲四连招 / 混合连招</div>
+                        <p>VCF=一路冲四杀到赢；VCT=活三冲四混合连杀。这是 AI 的核心算法，也是高手的杀人技：<b>算准了再动手，动手就不停</b>。</p>
+                    </div>
+                    <div class="pattern-card">
+                        <h4>以攻代守</h4>
+                        <div class="pattern-demo">反冲四 &gt; 堵棋</div>
+                        <p>对方活三来袭时，若你能冲四反先、逼他回头堵你的四——比被动堵三高一个档次。水平差距就在这里。</p>
+                    </div>
+                </div>
+
+                <h3 class="chapter-title">第 5 章 防守的艺术：堵在哪很有讲究</h3>
+                <div class="pattern-grid">
+                    <div class="pattern-card">
+                        <h4>防守优先级</h4>
+                        <div class="pattern-demo">五&gt;活四&gt;四三&gt;双三&gt;活三</div>
+                        <p>对方哪个威胁离赢最近就堵哪个。你自己有更快杀招时除外——<b>进攻永远优先于防守，只要你算得清</b>。</p>
+                    </div>
+                    <div class="pattern-card">
+                        <h4>堵头还是堵中间？</h4>
+                        <div class="pattern-demo">挡向开阔的一侧</div>
+                        <p>堵活三时，挡在对方<b>发展空间大、能与其他棋子连线</b>的那端。挡错方向等于白堵。</p>
+                    </div>
+                    <div class="pattern-card">
+                        <h4>防攻结合</h4>
+                        <div class="pattern-demo">一子两用</div>
+                        <p>最好的防守点往往同时在自己进攻线上。一子既堵对方活三、又连自己活二——价值翻倍。</p>
+                    </div>
+                    <div class="pattern-card">
+                        <h4>别追着屁股堵</h4>
+                        <div class="pattern-demo">被动 = 慢性死亡</div>
+                        <p>只会堵棋的人永远在输。防守的目的是<b>熬到自己的棋型成形</b>，堵完立刻找反击机会。</p>
+                    </div>
+                </div>
+
+                <h3 class="chapter-title">第 6 章 禁手：黑棋的紧箍咒</h3>
+                <p class="tutorial-intro">为抵消黑棋先手优势，连珠规则规定<b>黑棋违禁落子直接判负</b>，白棋不受任何限制。本站默认开启禁手（侧栏开关可关闭）。</p>
+                <div class="pattern-grid">
+                    <div class="pattern-card kill">
+                        <h4>三三禁手</h4>
+                        <div class="pattern-demo">一手同时做两个活三</div>
+                        <p>黑棋一子落下同时形成两个及以上活三，判负。注意：跳三（●△●●）也算活三。</p>
+                    </div>
+                    <div class="pattern-card kill">
+                        <h4>四四禁手</h4>
+                        <div class="pattern-demo">一手同时做两个四</div>
+                        <p>一子同时形成一个活四+冲四、两个冲四、或同一条线上的拆分双四，都判负。活四本身合法（下一步直接成五）。</p>
+                    </div>
+                    <div class="pattern-card kill">
+                        <h4>长连禁手</h4>
+                        <div class="pattern-demo">六连或以上 ≠ 胜</div>
+                        <p>黑棋连成六子或以上<b>不是获胜而是判负</b>；白棋长连仍然获胜。所以黑棋堵头时要小心"堵出六连"。</p>
+                    </div>
+                    <div class="pattern-card">
+                        <h4>恰好五连才能赢</h4>
+                        <div class="pattern-demo">正好五子获胜</div>
+                        <p>黑棋只有恰好五连才算赢。<b>成五优先于一切禁手</b>：就算这一手同时是三三，只要恰好成五就是胜利。禁手点会在棋盘上标红叉。</p>
+                    </div>
+                </div>
+
+                <h3 class="chapter-title">第 7 章 新手六大常见错误</h3>
+                <div class="pattern-grid">
+                    <div class="pattern-card warn">
+                        <h4>① 只攻不守</h4>
+                        <p>埋头做自己的棋，对方活四了才看见。落子前先扫一眼：对方有没有三？有没有四？</p>
+                    </div>
+                    <div class="pattern-card warn">
+                        <h4>② 浪费冲四</h4>
+                        <p>冲四是最强命令，但冲完接不上后续威胁就是白送先手。冲四必须为杀招服务。</p>
+                    </div>
+                    <div class="pattern-card warn">
+                        <h4>③ 棋子散落</h4>
+                        <p>东一个西一个互相帮不上忙。战斗力=棋子的<b>连接度</b>，不是数量。</p>
+                    </div>
+                    <div class="pattern-card warn">
+                        <h4>④ 无脑贴身防守</h4>
+                        <p>对方下一子你贴一子，永远慢半拍。要预判对方的<b>下一步</b>，不是追着上一步。</p>
+                    </div>
+                    <div class="pattern-card warn">
+                        <h4>⑤ 忽视斜线</h4>
+                        <p>人眼对横竖敏感、对斜线迟钝，大多数失手都在斜线上。防守时四个方向都要扫。</p>
+                    </div>
+                    <div class="pattern-card warn">
+                        <h4>⑥ 不复盘</h4>
+                        <p>每盘用"导出"存棋谱，看自己第几手开始崩盘。进步最快的方法没有之一。</p>
+                    </div>
+                </div>
+
+                <p class="tutorial-tip">💡 <b>练习路径</b>：① 教学模式开"AI 解释"，看 AI 每步在攻还是在守 → ② 自己先想一步，再点"求提示"对比 → ③ 能偶尔赢 AI 后，切"玩家先手"体验执黑优势 → ④ 用"双人对战"和家人实战。每盘导出棋谱复盘，10 盘见效。</p>
+            </div>
+        </details>
+
+        <footer>
+            <p>部署于 Cloudflare Pages</p>
+        </footer>
+    </div>
+
+    <script src="renju.js?v=20260928-3"></script>
+    <script src="game.js?v=20260928-3"></script>
+    <script>
+        // 访问统计埋点（monitor.supertato.top）
+        (function () {
+            var img = new Image();
+            img.src = 'https://monitor.supertato.top/hit?site=wuziqi&path=' +
+                encodeURIComponent(location.pathname) + '&r=' + Math.random();
+        })();
+    </script>
+</body>
+</html>
